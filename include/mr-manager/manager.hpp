@@ -71,8 +71,9 @@ struct Manager {
     return { _table.find(id) };
   }
 
-  Handle find(AssetId id) noexcept {
-    return { _table.find(id) };
+  std::optional<Handle> find(AssetId id) noexcept {
+    auto it = _table.find(id);
+    return it == _table.end() ? std::nullopt : Handle{it};
   }
 
   void clear() noexcept {
