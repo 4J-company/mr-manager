@@ -44,24 +44,50 @@ struct Manager {
   };
 
   using HashMap = folly::ConcurrentHashMap<AssetId, Entry>;
-  using Handle = HashMap::const_iterator;
+  struct Handle {
+    T* operator->() noexcept {
+      return it->second.ptr;
+    }
+
+    const T& value() const noexcept {
+      return *it->second.ptr;
+    }
+
+    T& value() noexcept {
+      return *it->second.ptr;
+    }
+
+    HashMap::const_iterator it;
+  };
 
   static Manager& get() {
     static Manager instance;
     return instance;
   }
 
-  HashMap _table {_max_elements};
-
   template<typename ...Args>
   Handle create(AssetId id, Args&& ...args) {
     _table.insert_or_assign(id, T{std::forward<Args>(args)...});
-    return {_table.find(id)};
+    return { _table.find(id) };
+  }
+
+  Handle find(AssetId id) noexcept {
+    return { _table.find(id) };
+  }
+
+  void clear() noexcept {
+    _table.clear();
+  }
+
+  size_t size() const noexcept {
+    return _table.size();
   }
 
 private:
   Manager() noexcept = default;
   ~Manager() noexcept = default;
+
+  HashMap _table {_max_elements};
 };
 
 } // namespace mr
