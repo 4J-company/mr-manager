@@ -1,11 +1,12 @@
 from conan import ConanFile
-from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
+from conan.tools.layout import basic_layout
 from conan.tools.build import check_min_cppstd
+from conan.tools.files import copy
 
 class mr_importerRecipe(ConanFile):
     name = "mr-manager"
     version = "1.0"
-    package_type = "library"
+    package_type = "header-library"
 
     license = "MIT"
     author = "Michael Tsukanov mt6@4j-company.ru"
@@ -14,51 +15,28 @@ class mr_importerRecipe(ConanFile):
 
     settings = "os", "compiler", "build_type", "arch"
 
-    options = {"shared": [True, False]}
-    default_options = {"shared": False}
-
     exports_sources = "CMakeLists.txt", "include/*"
 
-    def requirements(self):
-        self.requires("folly/2024.08.12.00")
-        self.requires("fmt/10.2.1")
+    exports_sources = "include/*"
 
-    def build_requirements(self):
-        self.tool_requires("cmake/[>3.26]")
-        self.tool_requires("ninja/[~1.12]")
-
-        if self.settings.os == "Linux":
-            self.tool_requires("mold/[>=2.40]")
-
-        self.test_requires("gtest/1.14.0")
+    implements = ["auto_header_only"]
 
     def validate(self):
         check_min_cppstd(self, "23")
 
-    def configure(self):
-        if self.settings.os == "Linux":
-            self.conf_info.append("tools.build:exelinkflags", "-fuse-ld=mold")
-            self.conf_info.append("tools.build:sharedlinkflags", "-fuse-ld=mold")
+    def requirements(self):
+        self.requires("folly/2024.08.12.00")
+
+    def build_requirements(self):
+        self.test_requires("gtest/1.14.0")
 
     def layout(self):
-        cmake_layout(self)
-
-    def generate(self):
-        deps = CMakeDeps(self)
-        deps.generate()
-        tc = CMakeToolchain(self)
-        tc.generator = "Ninja"
-        tc.generate()
-
-    def build(self):
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.build()
+        basic_layout(self)
 
     def package(self):
-        cmake = CMake(self)
-        cmake.install()
+        copy(self, "include/*", self.source_folder, self.package_folder)
 
     def package_info(self):
-        self.cpp_info.libs = ["mr-manager"]
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
 
