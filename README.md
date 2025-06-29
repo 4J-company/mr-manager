@@ -6,9 +6,8 @@
 
 - **Wait-free** object management
 - **Per-type memory pools** using C++17 polymorphic allocators
-- **Concurrent access** via folly's RCU and `ConcurrentHashMap`
+- **Concurrent access** via folly's `ConcurrentHashMap`
 - **Type-safe handles** for asset access
-- **Customizable hashing** for asset IDs
 
 ---
 
@@ -21,7 +20,7 @@
 - [CMake](https://cmake.org/) >= 3.26 (handled by Conan)
 - [folly](https://github.com/facebook/folly) (handled by Conan)
 - [fmt](https://github.com/fmtlib/fmt) (handled by Conan)
-- (Linux) [mold](https://github.com/rui314/mold) linker (optional, for faster linking)
+- (Linux, optional) [mold](https://github.com/rui314/mold) linker (handled by Conan)
 
 ### Quick Start
 
@@ -49,8 +48,8 @@ Below is a minimal example of how to use `mr-manager` to manage a custom type:
 #include <string>
 
 struct MyAsset {
-    std::string name;
-    int value;
+    std::string str;
+    int num;
     MyAsset(std::string n, int v) : name(std::move(n)), value(v) {}
 };
 
@@ -59,26 +58,18 @@ int main() {
     auto& manager = mr::Manager<MyAsset>::get();
 
     // Create an asset (the hash of arguments is used as the ID)
-    auto handle = manager.create("example", 42);
+    auto handle = manager.create("custom asset id", "forty two", 42);
 
     // Access the asset using the handle
-    handle.with([](const MyAsset& asset) {
-        std::cout << "Asset: " << asset.name << ", value: " << asset.value << std::endl;
-    });
-
-    return 0;
+    std::println("String: {}; Number: {}", handle->str, handle->num);
 }
 ```
 
 ### How it works
 
 - `mr::Manager<T>::get()` returns a singleton manager for type `T`.
-- `manager.create(args...)` constructs a new asset of type `T` with the given arguments, or returns a handle to an existing one with the same hash.
-- `Handle<T>::with(func)` safely accesses the asset, passing it to your function if it exists.
-
-### Custom Hashing
-
-The asset ID is computed using a custom hash function (see `include/mr-manager/hash.hpp`), which combines the hashes of the constructor arguments.
+- `manager.create(id, args...)` constructs a new asset of type `T` with the given arguments, or returns a handle to an existing one with the same id.
+- `Handle<T>::operator->` safely accesses the asset
 
 ---
 
@@ -97,7 +88,7 @@ To use `mr-manager` in your own project:
 
     ```cmake
     find_package(mr-manager REQUIRED)
-    target_link_libraries(your_target PRIVATE mr-manager)
+    target_link_libraries(your_target PRIVATE mr-manager::mr-manager)
     ```
 
 ---
