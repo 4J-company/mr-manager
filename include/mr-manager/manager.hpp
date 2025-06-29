@@ -7,7 +7,8 @@
 #include <folly/concurrency/ConcurrentHashMap.h>
 
 namespace mr {
-using AssetId = std::string;
+template <typename> struct AssetId { using type = std::string; };
+template <typename T> using asset_id_t = AssetId<T>::type;
 
 template <typename T> struct Manager;
 
@@ -43,7 +44,9 @@ struct Manager {
     Entry & operator=(Entry &&other) noexcept = default;
   };
 
-  using HashMap = folly::ConcurrentHashMap<AssetId, Entry>;
+  using AssetIdT = asset_id_t<T>;
+  using HashMapT = folly::ConcurrentHashMap<AssetIdT, Entry>;
+
   struct Handle {
     T* operator->() noexcept {
       return it->second.ptr;
@@ -57,7 +60,7 @@ struct Manager {
       return *it->second.ptr;
     }
 
-    HashMap::const_iterator it;
+    HashMapT::const_iterator it;
   };
 
   static Manager& get() {
@@ -66,14 +69,17 @@ struct Manager {
   }
 
   template<typename ...Args>
-  Handle create(AssetId id, Args&& ...args) {
+  Handle create(const AssetIdT &id, Args&& ...args) {
     _table.insert_or_assign(id, T{std::forward<Args>(args)...});
     return { _table.find(id) };
   }
 
-  std::optional<Handle> find(AssetId id) noexcept {
+  std::optional<Handle> find(const AssetIdT &id) noexcept {
     auto it = _table.find(id);
-    return it == _table.end() ? std::nullopt : Handle{it};
+    if (it == _table.end()) [[unlikely]] {
+      return std::nullopt;
+    }
+    return Handle{std::move(it)};
   }
 
   void clear() noexcept {
@@ -88,7 +94,7 @@ private:
   Manager() noexcept = default;
   ~Manager() noexcept = default;
 
-  HashMap _table {_max_elements};
+  HashMapT _table {_max_elements};
 };
 
 } // namespace mr
