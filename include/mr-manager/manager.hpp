@@ -63,18 +63,18 @@ struct Manager {
     HashMapT::const_iterator it;
   };
 
-  static Manager& get() {
+  static constexpr Manager& get() {
     static Manager instance;
     return instance;
   }
 
   template<typename ...Args>
-  Handle create(const AssetIdT &id, Args&& ...args) {
+  constexpr Handle create(const AssetIdT &id, Args&& ...args) noexcept {
     _table.insert_or_assign(id, T{std::forward<Args>(args)...});
     return { _table.find(id) };
   }
 
-  std::optional<Handle> find(const AssetIdT &id) noexcept {
+  constexpr std::optional<Handle> find(const AssetIdT &id) const noexcept {
     auto it = _table.find(id);
     if (it == _table.end()) [[unlikely]] {
       return std::nullopt;
@@ -82,17 +82,17 @@ struct Manager {
     return Handle{std::move(it)};
   }
 
-  void clear() noexcept {
+  constexpr void clear() noexcept {
     _table.clear();
   }
 
-  size_t size() const noexcept {
+  constexpr size_t size() const noexcept {
     return _table.size();
   }
 
 private:
-  Manager() noexcept = default;
-  ~Manager() noexcept = default;
+  constexpr Manager() noexcept = default;
+  constexpr ~Manager() noexcept = default;
 
   HashMapT _table {_max_elements};
 };
