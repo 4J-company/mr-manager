@@ -3,22 +3,21 @@ from conan.tools.layout import basic_layout
 from conan.tools.build import check_min_cppstd
 from conan.tools.files import copy
 
-class mr_importerRecipe(ConanFile):
+class MrImporter(ConanFile):
     name = "mr-manager"
     version = "1.0"
-    package_type = "header-library"
-
     license = "MIT"
-    author = "Michael Tsukanov mt6@4j-company.ru"
-    url = "https://github.com/4j-company/mr-manager"
+
     description = "Wait-Free object manager with per-type memory pools"
+
+    author = "Michael Tsukanov (mt6@4j-company.ru)"
+    url = "https://github.com/4j-company/mr-manager"
 
     settings = "os", "compiler", "build_type", "arch"
 
     exports_sources = "CMakeLists.txt", "include/*"
 
-    exports_sources = "include/*"
-
+    package_type = "header-library"
     implements = ["auto_header_only"]
 
     def validate(self):
