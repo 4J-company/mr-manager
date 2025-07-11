@@ -3,9 +3,9 @@ from conan.tools.layout import basic_layout
 from conan.tools.build import check_min_cppstd
 from conan.tools.files import copy
 
-class MrImporter(ConanFile):
+class MrManager(ConanFile):
     name = "mr-manager"
-    version = "1.0"
+    version = "1.0.1"
     license = "MIT"
 
     description = "Wait-Free object manager with per-type memory pools"
@@ -21,7 +21,7 @@ class MrImporter(ConanFile):
     implements = ["auto_header_only"]
 
     def validate(self):
-        check_min_cppstd(self, "23")
+        check_min_cppstd(self, "17")
 
     def requirements(self):
         self.requires("folly/2024.08.12.00")
@@ -38,4 +38,5 @@ class MrImporter(ConanFile):
     def package_info(self):
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
+        self.cpp_info.requires = ["folly::folly"]
 
