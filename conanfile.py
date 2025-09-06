@@ -5,7 +5,7 @@ from conan.tools.files import copy
 
 class MrManager(ConanFile):
     name = "mr-manager"
-    version = "1.0.1"
+    version = "1.0.2"
     license = "MIT"
 
     description = "Wait-Free object manager with per-type memory pools"

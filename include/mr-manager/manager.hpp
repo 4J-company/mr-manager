@@ -2,13 +2,17 @@
 
 #include <memory_resource>
 #include <cassert>
+#include <atomic>
 #include <string>
 
 #include <folly/concurrency/ConcurrentHashMap.h>
 
 namespace mr {
+struct UnnamedTag {};
+constexpr inline UnnamedTag unnamed;
+
 template <typename> struct AssetId { using type = std::string; };
-template <typename T> using asset_id_t = AssetId<T>::type;
+template <typename T> using asset_id_t = typename AssetId<T>::type;
 
 template <typename T> struct Manager;
 
@@ -72,6 +76,15 @@ struct Manager {
   constexpr Handle create(const AssetIdT &id, Args&& ...args) noexcept {
     _table.insert_or_assign(id, T{std::forward<Args>(args)...});
     return { _table.find(id) };
+  }
+
+  template<typename ...Args>
+  constexpr Handle create(UnnamedTag, Args&& ...args) noexcept {
+    static std::atomic_int cnt = 0;
+    int id = cnt++;
+    std::string idstr = std::to_string(id);
+    _table.insert_or_assign(idstr, T{std::forward<Args>(args)...});
+    return { _table.find(idstr) };
   }
 
   constexpr std::optional<Handle> find(const AssetIdT &id) const noexcept {
